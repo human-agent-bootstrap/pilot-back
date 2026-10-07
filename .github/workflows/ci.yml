@@ -1,0 +1,33 @@
+name: pilot-back CI
+
+# Runs exactly the verification commands declared for this service in the root plan
+# (changes/CHG-TASK-001/WORK_UNITS.yaml). uv provisions its own Python 3.12, so no
+# separate setup-python step is needed.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  UV_VERSION: "0.10.12"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install uv
+        run: |
+          curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - run: uv sync --locked --python 3.12
+      - run: uv run --locked pytest
+      - run: uv run --locked ruff check .
